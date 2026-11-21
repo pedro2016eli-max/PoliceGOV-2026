@@ -1,16 +1,4 @@
 
--- =====================================================================
--- PoliceGOV - Sistema de Boletim de Ocorrencias Estadual
--- Arquivo : 03_DML_Estrutura_Policial.sql
--- Autor   : Alan (Bloco Estrutura Policial)
--- SGBD    : PostgreSQL
--- Conteudo: insercao de delegacias, telefones, policiais,
---           delegados, investigadores e escrivaes.
--- Executar apos os arquivos 01 e 02.
--- =====================================================================
-
--- IMPORTANTE:
--- Executar conectado ao banco policegov.
 
 -- 1. DELEGACIAS
 -- IDs fixos 1, 2 e 3 utilizados nos boletins de ocorrencia.

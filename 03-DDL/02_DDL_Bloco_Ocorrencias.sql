@@ -1,16 +1,4 @@
 
--- =====================================================================
--- PoliceGOV - Sistema de Boletim de Ocorrencias Estadual
--- Arquivo : 02_DDL_Bloco_Ocorrencias.sql
--- SGBD    : PostgreSQL
--- Conteudo: cidadao, tipo_ocorrencia, bo, bo_cidadao,
---           bo_tipo e ficha_inquerito.
--- Depende : 01_DDL_Estrutura_Policial.sql
--- =====================================================================
-
--- IMPORTANTE:
--- Executar conectado ao banco policegov no pgAdmin 4.
-
 -- 1. LIMPEZA DAS TABELAS DO BLOCO OCORRENCIAS
 
 DROP VIEW IF EXISTS vw_idade_cidadao;

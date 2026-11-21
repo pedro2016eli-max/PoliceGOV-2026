@@ -1,12 +1,4 @@
 
--- =====================================================================
--- PoliceGOV - Sistema de Boletim de Ocorrencias Estadual
--- Arquivo : 01_DDL_Estrutura_Policial.sql
--- Autor   : Alan (Bloco Estrutura Policial)
--- SGBD    : PostgreSQL
--- Conteudo: criacao das tabelas delegacia, delegacia_telefone,
---           policial, delegado e investigador_escrivao.
--- =====================================================================
 
 -- 1. LIMPEZA DAS TABELAS
 -- Executar conectado ao banco policegov.

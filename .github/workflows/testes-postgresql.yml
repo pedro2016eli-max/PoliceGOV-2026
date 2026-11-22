@@ -1,1 +1,119 @@
 
+name: Testes PostgreSQL - PoliceGOV
+
+on:
+  workflow_dispatch:
+
+jobs:
+  testar-banco:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: policegov
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: policegov
+
+    steps:
+      - name: Baixar arquivos do repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Criar tabelas e inserir dados
+        run: |
+          set -e
+          for arquivo in \
+            03-DDL/01_DDL_Estrutura_Policial.sql \
+            03-DDL/02_DDL_Bloco_Ocorrencias.sql \
+            04-DML/03_DML_Estrutura_Policial.sql \
+            04-DML/04_DML_Bloco_Ocorrencias.sql \
+            04-DML/05_VIEW_Idade_Cidadao.sql
+          do
+            echo "Executando: $arquivo"
+            psql -v ON_ERROR_STOP=1 -f "$arquivo"
+          done
+
+      - name: Executar relatorios
+        run: |
+          psql -v ON_ERROR_STOP=1 \
+            -f 05-Relatorios/06_Relatorios_Gerenciais.sql
+
+      - name: Executar 39 testes de integridade
+        shell: bash
+        run: |
+          set -o pipefail
+          psql -v ON_ERROR_STOP=1 \
+            -f 06-Testes/07_Testes_Integridade.sql \
+            2>&1 | tee testes.log
+
+      - name: Organizar resultados em 6 grupos
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -f testes.log ]; then
+            echo "Testes nao executados." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          grupos=(
+            "01 10|Chaves e validacoes"
+            "11 17|Policiais"
+            "18 20|Estrutura e exclusoes"
+            "21 30|Cidadaos e ocorrencias"
+            "31 37|Inqueritos"
+            "38 39|Cascata e idades"
+          )
+
+          for grupo in "${grupos[@]}"; do
+            faixa="${grupo%%|*}"
+            titulo="${grupo#*|}"
+            read -r inicio fim <<< "$faixa"
+
+            echo "### $titulo (T$inicio a T$fim)" \
+              >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+
+            for numero in $(seq "$((10#$inicio))" "$((10#$fim))"); do
+              teste=$(printf "T%02d" "$numero")
+              grep -E "$teste (OK|ERRO|FALHOU)" testes.log \
+                >> "$GITHUB_STEP_SUMMARY" || \
+                echo "$teste: sem confirmacao" \
+                >> "$GITHUB_STEP_SUMMARY"
+            done
+
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Conferir dados
+        run: |
+          psql -v ON_ERROR_STOP=1 \
+            -f 07-Documento/08_Conferencia_Dados.sql
+
+      - name: Guardar resultado completo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-testes-policegov
+          path: testes.log
+          if-no-files-found: ignore
+

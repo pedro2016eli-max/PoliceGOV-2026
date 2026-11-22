@@ -2,6 +2,8 @@
 name: Testes PostgreSQL - PoliceGOV
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
